@@ -16,7 +16,7 @@ const CONFIG = {
     MASTER_PASSWORD: '145ridhimehta',  // Your password here
     AUDIO_URL: '/audio/surprise.mp3',  // Audio file in public/audio/
     PHONE_NUMBERS: [
-        '+91XXXXXXXXXX',  // Card 1
+        '+918758896576',  // Card 1
         '+91XXXXXXXXXX',  // Card 2
         '+91XXXXXXXXXX',  // Card 3
         '+91XXXXXXXXXX',  // Card 4
