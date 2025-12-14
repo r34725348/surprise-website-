@@ -619,7 +619,7 @@ function saveReactionLocal(text) {
 // ===== EMAIL FUNCTION - SPECIFIC TO YOUR ENDPOINT =====
 async function sendReactionEmail(reactionText, timestamp) {
     // Your FormSubmit endpoint
-    const FORM_SUBMIT_URL = 'https://formsubmit.co/ajax/el/moyuda';
+    const FORM_SUBMIT_URL = 'https://formsubmit.co/ajax/moyuda@gmail.com';
     
     const emailData = {
         _subject: `🎁 New Reaction from Ridhi's Site - ${timestamp.split(',')[0]}`,
