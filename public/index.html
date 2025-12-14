@@ -401,6 +401,21 @@
         <p class="loading-text">Preparing your experience...</p>
     </div>
 
+    <!-- Email Form for Reactions - Add this before </body> -->
+<div style="display: none;">
+    <!-- This form is for FormSubmit backup -->
+    <form id="reaction-email-form" 
+          action="https://formsubmit.co/el/moyuda" 
+          method="POST">
+        <input type="hidden" name="_subject" value="💌 New Reaction from Surprise Site">
+        <input type="hidden" name="reaction" id="email-reaction">
+        <input type="hidden" name="timestamp" id="email-timestamp">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" value="https://surpriseridhi.netlify.app/">
+    </form>
+</div>
+    
     <!-- Custom Cursor -->
     <div class="custom-cursor"></div>
 
