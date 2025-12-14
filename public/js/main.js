@@ -576,153 +576,63 @@ function saveReactionLocal(text) {
     if (!trimmedText) return;
     
     try {
-        // 1. Save to localStorage (for backup/viewing)
+        // 1. Save to localStorage
         const reactions = JSON.parse(localStorage.getItem('surpriseReactions') || '[]');
         const newReaction = {
             text: trimmedText,
             timestamp: new Date().toISOString(),
             date: new Date().toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata',
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
                 hour12: true
-            }),
-            site: 'surpriseridhi.netlify.app'
+            })
         };
         
         reactions.push(newReaction);
         localStorage.setItem('surpriseReactions', JSON.stringify(reactions));
         
-        // 2. Send email to yourself via FormSubmit
+        // 2. Send email
         sendReactionEmail(trimmedText, newReaction.date);
         
-        // 3. Log to console
-        console.log('📝 Reaction saved:', {
-            time: newReaction.date,
-            preview: trimmedText.length > 100 ? 
-                    trimmedText.substring(0, 100) + '...' : 
-                    trimmedText,
-            length: trimmedText.length,
-            totalReactions: reactions.length
-        });
+        console.log('✅ Reaction saved locally');
         
     } catch (error) {
-        console.error('❌ Error saving reaction:', error);
+        console.error('❌ Error:', error);
     }
 }
 
-// ===== EMAIL FUNCTION - SPECIFIC TO YOUR ENDPOINT =====
+// ===== EMAIL FUNCTION =====
 async function sendReactionEmail(reactionText, timestamp) {
-    // Your FormSubmit endpoint
-    const FORM_SUBMIT_URL = 'https://formsubmit.co/ajax/moyuda@gmail.com';
+    console.log('📧 Sending to moyuda@gmail.com...');
     
     const emailData = {
-        _subject: `🎁 New Reaction from Ridhi's Site - ${timestamp.split(',')[0]}`,
-        reaction: reactionText,
-        timestamp: timestamp,
-        site: 'surpriseridhi.netlify.app',
+        _subject: `Reaction - ${new Date().toLocaleTimeString()}`,
+        message: `Someone wrote on your site:\n\n"${reactionText}"\n\nTime: ${timestamp}\nSite: surpriseridhi.netlify.app`,
         _captcha: 'false',
-        _template: 'table',
-        _replyto: 'noreply@surpriseridhi.netlify.app',
-        _blacklist: 'spam,bot'
+        _template: 'basic'
     };
     
-    console.log('📧 Attempting to send email...');
-    
     try {
-        const response = await fetch(FORM_SUBMIT_URL, {
+        const response = await fetch('https://formsubmit.co/ajax/moyuda@gmail.com', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(emailData)
         });
         
+        console.log('📡 Response status:', response.status);
         const result = await response.json();
-        
-        if (result.success === 'true') {
-            console.log('✅ Email sent successfully!');
-            console.log('FormSubmit response:', result);
-        } else {
-            console.log('⚠️ Email service response:', result);
-        }
+        console.log('📨 Result:', result);
         
     } catch (error) {
-        console.log('📧 Email failed (local storage still works):', error.message);
-        // Fallback: Use traditional form submission
+        console.log('📧 Using form fallback...');
         fallbackEmailSubmit(reactionText, timestamp);
     }
 }
 
-// ===== FALLBACK EMAIL METHOD =====
 function fallbackEmailSubmit(reactionText, timestamp) {
-    try {
-        document.getElementById('email-reaction').value = reactionText;
-        document.getElementById('email-timestamp').value = timestamp;
-        
-        // Submit the form in background
-        fetch('https://formsubmit.co/el/moyuda', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams(new FormData(document.getElementById('reaction-email-form')))
-        })
-        .then(response => {
-            console.log('📧 Fallback email submitted');
-        })
-        .catch(err => {
-            console.log('📧 Both email methods failed');
-        });
-        
-    } catch (error) {
-        console.log('📧 Email submission failed completely');
-    }
+    const message = `Reaction: ${reactionText}\nTime: ${timestamp}`;
+    document.getElementById('email-message').value = message;
+    document.getElementById('reaction-email-form').submit();
 }
-
-// ===== VIEW ALL SAVED REACTIONS =====
-function viewSavedReactions() {
-    const reactions = JSON.parse(localStorage.getItem('surpriseReactions') || '[]');
-    
-    if (reactions.length === 0) {
-        console.log('📭 No reactions saved yet.');
-        return [];
-    }
-    
-    console.log(`📚 TOTAL REACTIONS SAVED: ${reactions.length}`);
-    console.log('='.repeat(50));
-    
-    reactions.forEach((r, i) => {
-        console.log(`\n📄 REACTION ${i + 1}:`);
-        console.log(`   📅 ${r.date}`);
-        console.log(`   💭 ${r.text}`);
-        console.log(`   🔗 ${r.site || 'surpriseridhi.netlify.app'}`);
-        console.log('-'.repeat(40));
-    });
-    
-    return reactions;
-}
-
-// ===== TEST FUNCTION (for you to test) =====
-window.testReactionEmail = function(testText = 'Test reaction from browser console') {
-    console.log('🧪 Testing email system...');
-    saveReactionLocal(testText);
-    console.log('Check your email inbox in 1-2 minutes!');
-};
-
-// ===== CLEAR ALL REACTIONS (if needed) =====
-window.clearAllReactions = function() {
-    if (confirm('Clear ALL saved reactions?')) {
-        localStorage.removeItem('surpriseReactions');
-        console.log('🗑️ All reactions cleared from localStorage.');
-    }
-};
 
 // ===== TIMER POPUP =====
 function startTimerPopup() {
