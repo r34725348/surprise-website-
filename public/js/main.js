@@ -606,7 +606,7 @@ async function sendReactionEmail(reactionText, timestamp) {
     
     const emailData = {
         _subject: `Reaction - ${new Date().toLocaleTimeString()}`,
-        message: `Someone wrote on your site:\n\n"${reactionText}"\n\nTime: ${timestamp}\nSite: surpriseridhi.netlify.app`,
+        message: `Someone wrote on your site:\n\n"${reactionText}"\n\nTime: ${timestamp}\nSite: surprise-ridhi.netlify.app`,
         _captcha: 'false',
         _template: 'basic'
     };
