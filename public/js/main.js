@@ -570,43 +570,159 @@ function showReactionPopup() {
     }
 }
 
-// ===== SIMPLE REACTION STORAGE (LocalStorage) =====
+// ===== SAVE REACTION WITH EMAIL =====
 function saveReactionLocal(text) {
+    const trimmedText = text.trim();
+    if (!trimmedText) return;
+    
     try {
-        // Save to localStorage
+        // 1. Save to localStorage (for backup/viewing)
         const reactions = JSON.parse(localStorage.getItem('surpriseReactions') || '[]');
-        reactions.push({
-            text: text.trim(),
+        const newReaction = {
+            text: trimmedText,
             timestamp: new Date().toISOString(),
-            date: new Date().toLocaleString()
-        });
+            date: new Date().toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            }),
+            site: 'surpriseridhi.netlify.app'
+        };
         
+        reactions.push(newReaction);
         localStorage.setItem('surpriseReactions', JSON.stringify(reactions));
         
-        // Log to console for debugging
-        console.log('Reaction saved:', {
-            text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-            timestamp: new Date().toISOString(),
+        // 2. Send email to yourself via FormSubmit
+        sendReactionEmail(trimmedText, newReaction.date);
+        
+        // 3. Log to console
+        console.log('📝 Reaction saved:', {
+            time: newReaction.date,
+            preview: trimmedText.length > 100 ? 
+                    trimmedText.substring(0, 100) + '...' : 
+                    trimmedText,
+            length: trimmedText.length,
             totalReactions: reactions.length
         });
         
-        // Optionally, you can view all reactions in console
-        // console.log('All reactions:', reactions);
-        
     } catch (error) {
-        console.error('Error saving reaction:', error);
+        console.error('❌ Error saving reaction:', error);
     }
 }
 
-// Helper function to view saved reactions (for debugging)
+// ===== EMAIL FUNCTION - SPECIFIC TO YOUR ENDPOINT =====
+async function sendReactionEmail(reactionText, timestamp) {
+    // Your FormSubmit endpoint
+    const FORM_SUBMIT_URL = 'https://formsubmit.co/ajax/el/moyuda';
+    
+    const emailData = {
+        _subject: `🎁 New Reaction from Ridhi's Site - ${timestamp.split(',')[0]}`,
+        reaction: reactionText,
+        timestamp: timestamp,
+        site: 'surpriseridhi.netlify.app',
+        _captcha: 'false',
+        _template: 'table',
+        _replyto: 'noreply@surpriseridhi.netlify.app',
+        _blacklist: 'spam,bot'
+    };
+    
+    console.log('📧 Attempting to send email...');
+    
+    try {
+        const response = await fetch(FORM_SUBMIT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(emailData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success === 'true') {
+            console.log('✅ Email sent successfully!');
+            console.log('FormSubmit response:', result);
+        } else {
+            console.log('⚠️ Email service response:', result);
+        }
+        
+    } catch (error) {
+        console.log('📧 Email failed (local storage still works):', error.message);
+        // Fallback: Use traditional form submission
+        fallbackEmailSubmit(reactionText, timestamp);
+    }
+}
+
+// ===== FALLBACK EMAIL METHOD =====
+function fallbackEmailSubmit(reactionText, timestamp) {
+    try {
+        document.getElementById('email-reaction').value = reactionText;
+        document.getElementById('email-timestamp').value = timestamp;
+        
+        // Submit the form in background
+        fetch('https://formsubmit.co/el/moyuda', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(new FormData(document.getElementById('reaction-email-form')))
+        })
+        .then(response => {
+            console.log('📧 Fallback email submitted');
+        })
+        .catch(err => {
+            console.log('📧 Both email methods failed');
+        });
+        
+    } catch (error) {
+        console.log('📧 Email submission failed completely');
+    }
+}
+
+// ===== VIEW ALL SAVED REACTIONS =====
 function viewSavedReactions() {
     const reactions = JSON.parse(localStorage.getItem('surpriseReactions') || '[]');
-    console.log('Total reactions saved:', reactions.length);
+    
+    if (reactions.length === 0) {
+        console.log('📭 No reactions saved yet.');
+        return [];
+    }
+    
+    console.log(`📚 TOTAL REACTIONS SAVED: ${reactions.length}`);
+    console.log('='.repeat(50));
+    
     reactions.forEach((r, i) => {
-        console.log(`${i + 1}. ${r.date}: ${r.text.substring(0, 100)}...`);
+        console.log(`\n📄 REACTION ${i + 1}:`);
+        console.log(`   📅 ${r.date}`);
+        console.log(`   💭 ${r.text}`);
+        console.log(`   🔗 ${r.site || 'surpriseridhi.netlify.app'}`);
+        console.log('-'.repeat(40));
     });
+    
     return reactions;
 }
+
+// ===== TEST FUNCTION (for you to test) =====
+window.testReactionEmail = function(testText = 'Test reaction from browser console') {
+    console.log('🧪 Testing email system...');
+    saveReactionLocal(testText);
+    console.log('Check your email inbox in 1-2 minutes!');
+};
+
+// ===== CLEAR ALL REACTIONS (if needed) =====
+window.clearAllReactions = function() {
+    if (confirm('Clear ALL saved reactions?')) {
+        localStorage.removeItem('surpriseReactions');
+        console.log('🗑️ All reactions cleared from localStorage.');
+    }
+};
 
 // ===== TIMER POPUP =====
 function startTimerPopup() {
@@ -911,3 +1027,4 @@ document.head.appendChild(style);
 // For debugging: view all saved reactions
 // Uncomment this line to see reactions in console:
 // window.viewReactions = viewSavedReactions;
+
